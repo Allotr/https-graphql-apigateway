@@ -11,43 +11,43 @@ const { stitchingDirectivesTransformer } = stitchingDirectives();
 
 export async function createGatewaySchema(cookie) {
     const {
-        // GRAPHQL_USERS_URL,
+        GRAPHQL_USERS_URL,
         GRAPHQL_RESOURCES_URL,
-        // GRAPHQL_NOTIFICATIONS_URL
+        GRAPHQL_NOTIFICATIONS_URL
     } = getLoadedEnvVariables()
 
-    // const usersExec = buildHTTPExecutor({
-    //     endpoint: GRAPHQL_USERS_URL,
-    //     credentials: 'include',
-    //     headers: { 'cookie': cookie }
-    // })
+    const usersExec = buildHTTPExecutor({
+        endpoint: GRAPHQL_USERS_URL,
+        credentials: 'include',
+        headers: { 'cookie': cookie }
+    })
     const resourcesExec = buildHTTPExecutor({
         endpoint: GRAPHQL_RESOURCES_URL,
         credentials: 'include',
         headers: { 'cookie': cookie }
     })
-    // const notificationsExec = buildHTTPExecutor({
-    //     endpoint: GRAPHQL_NOTIFICATIONS_URL,
-    //     credentials: 'include',
-    //     headers: { 'cookie': cookie }
-    // })
+    const notificationsExec = buildHTTPExecutor({
+        endpoint: GRAPHQL_NOTIFICATIONS_URL,
+        credentials: 'include',
+        headers: { 'cookie': cookie }
+    })
 
     return stitchSchemas({
         // 1. Include directives transformer...
         subschemaConfigTransforms: [stitchingDirectivesTransformer],
         subschemas: [
-            // {
-            //     schema: await fetchRemoteSchema(usersExec),
-            //     executor: usersExec
-            // },
+            {
+                schema: await fetchRemoteSchema(usersExec),
+                executor: usersExec
+            },
             {
                 schema: await fetchRemoteSchema(resourcesExec),
                 executor: resourcesExec
             },
-            // {
-            //     schema: await fetchRemoteSchema(notificationsExec),
-            //     executor: notificationsExec
-            // }
+            {
+                schema: await fetchRemoteSchema(notificationsExec),
+                executor: notificationsExec
+            }
         ]
     })
 }
