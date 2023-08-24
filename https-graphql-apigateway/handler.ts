@@ -8,6 +8,7 @@ import { graphqlHTTP } from 'express-graphql';
 import { parse } from "graphql";
 import { compileQuery } from "graphql-jit";
 import { initializeCORS } from "./src/cors/cors-middleware";
+import { initializeGooglePassport, isLoggedIn } from "./src/auth/google-passport";
 
 async function handle(event: any, context: any, cb: any) {
   // When using graphqlHTTP this is not being executed
@@ -17,9 +18,10 @@ function onExpressServerCreated(app: core.Express) {
   // Create GraphQL HTTP server
   // IMPORTANT: ENVIRONMENT VARIABLES ONLY ARE AVAILABLE HERE AND ON onExpressServerListen
   initializeCORS(app);
+  initializeGooglePassport(app);
 
   const cache = {};
-  app.use("/graphql", graphqlHTTP(async (req, res, params) => {
+  app.use("/graphql", isLoggedIn, graphqlHTTP(async (req, res, params) => {
     const schema = await createGatewaySchema(req.headers?.cookie);
     const query = params?.query;
     if (query == null) {
