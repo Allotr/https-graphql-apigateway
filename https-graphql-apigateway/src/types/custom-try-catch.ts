@@ -1,1 +1,0 @@
-export type CustomTryCatch<T> = { result: T | null, error: any | null };
