@@ -29,7 +29,7 @@
     "@graphql-tools/executor-http": "^1.0.2",
     "@graphql-tools/stitch": "^9.0.1",
     "@graphql-tools/stitching-directives": "^3.0.0",
-    "allotr-graphql-schema-types": "2.0.3",
+    "allotr-graphql-schema-types": "2.1.0",
     "connect-mongo": "^4.5.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
