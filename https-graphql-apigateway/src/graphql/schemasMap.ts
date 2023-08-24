@@ -1,5 +1,3 @@
-import 'graphql-import-node';
-
 import { buildSchema } from "graphql";
 import { parse } from 'graphql'
 import { buildHTTPExecutor } from '@graphql-tools/executor-http'
