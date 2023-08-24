@@ -24,11 +24,11 @@
   },
   "dependencies": {
     "@graphql-codegen/typescript-mongodb": "^2.1.0",
-    "@graphql-tools/executor-http": "^1.0.2",
     "@graphql-tools/schema": "^8.1.2",
+    "@graphql-tools/utils": "^8.1.1",
+    "@graphql-tools/executor-http": "^1.0.2",
     "@graphql-tools/stitch": "^9.0.1",
     "@graphql-tools/stitching-directives": "^3.0.0",
-    "@graphql-tools/utils": "^8.1.1",
     "allotr-graphql-schema-types": "2.0.3",
     "connect-mongo": "^4.5.0",
     "cors": "^2.8.5",
@@ -42,6 +42,8 @@
     "graphql-subscriptions": "^1.2.1",
     "ioredis": "^4.27.8",
     "lodash": "^4.17.21",
-    "mongodb": "^4.1.0"
+    "mongodb": "^4.1.0",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0"
   }
 }
