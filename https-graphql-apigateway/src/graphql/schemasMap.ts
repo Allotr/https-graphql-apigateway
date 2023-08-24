@@ -1,11 +1,16 @@
 import { buildSchema } from "graphql";
 import { parse } from 'graphql'
+import { DIRECTIVES } from '@graphql-codegen/typescript-mongodb';
+import 'graphql-import-node';
+import * as userTypeDefs from "allotr-graphql-schema-types/src/schemas/user.graphql"
+import * as resourceTypeDefs from "allotr-graphql-schema-types/src/schemas/resources.graphql"
+import * as notificationTypeDefs from "allotr-graphql-schema-types/src/schemas/resourceNotification.graphql"
 import { buildHTTPExecutor } from '@graphql-tools/executor-http'
 import { stitchSchemas } from '@graphql-tools/stitch'
 import { stitchingDirectives } from '@graphql-tools/stitching-directives'
 import { getLoadedEnvVariables } from '../utils/env-loader';
 
-const { stitchingDirectivesTransformer } = stitchingDirectives();
+const { allStitchingDirectivesTypeDefs, stitchingDirectivesTransformer } = stitchingDirectives()
 
 export async function createGatewaySchema(cookie) {
     const {
@@ -30,20 +35,40 @@ export async function createGatewaySchema(cookie) {
         headers: { 'cookie': cookie }
     })
 
+    const usersTypeDefs = /* GraphQL */ `
+    ${allStitchingDirectivesTypeDefs}
+    ${DIRECTIVES?.loc?.source?.body}
+    ${userTypeDefs?.loc?.source?.body}
+    `
+
+
+    const resourcesTypeDefs = /* GraphQL */ `
+    ${allStitchingDirectivesTypeDefs}
+    ${DIRECTIVES?.loc?.source?.body}
+    ${resourceTypeDefs?.loc?.source?.body}
+    `
+
+
+    const notificationsTypeDefs = /* GraphQL */ `
+    ${allStitchingDirectivesTypeDefs}
+    ${DIRECTIVES?.loc?.source?.body}
+    ${notificationTypeDefs?.loc?.source?.body}
+    `
+
     return stitchSchemas({
         // 1. Include directives transformer...
         subschemaConfigTransforms: [stitchingDirectivesTransformer],
         subschemas: [
             {
-                schema: await fetchRemoteSchema(usersExec),
+                schema: buildSchema(usersTypeDefs),
                 executor: usersExec
             },
             {
-                schema: await fetchRemoteSchema(resourcesExec),
+                schema: buildSchema(resourcesTypeDefs),
                 executor: resourcesExec
             },
             {
-                schema: await fetchRemoteSchema(notificationsExec),
+                schema: buildSchema(notificationsTypeDefs),
                 executor: notificationsExec
             }
         ]
