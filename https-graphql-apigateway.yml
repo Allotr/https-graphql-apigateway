@@ -1,0 +1,9 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: https://openfaas.allotr.eu
+functions:
+  https-graphql-apigateway:
+    lang: node-typescript-express
+    handler: ./https-graphql-apigateway
+    image: rafaelpernil/https-graphql-apigateway:latest
