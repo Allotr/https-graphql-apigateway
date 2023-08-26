@@ -4,7 +4,6 @@ import MongoStore from 'connect-mongo';
 import { signedCookie } from "cookie-parser"
 import cookie from "cookie";
 import { ObjectId } from "mongodb";
-import { GraphQLContext } from "src/types/yoga-context";
 import { GraphQLError } from "graphql";
 
 let store: Store;
@@ -20,27 +19,37 @@ function initializeSessionStore() {
     sessionSecret = SESSION_SECRET;
 }
 
-function getSessionIdFromCookie(request: Request): string {
+async function getUserInfoFromRequest(request: Request): Promise<[sid: string | null, userId: ObjectId | null]> {
+    const sid = getSessionIdFromCookie(request);
+    const userId = await getUserIdFromSessionStore(sid);
+    if(userId == null){
+        throw new GraphQLError("Unauthorized, log in!");
+    }
+    return [sid, userId];
+}
+
+function getSessionIdFromCookie(request: Request): string | null {
     const cookieList = request.headers.get('cookie') ?? "";
     const parsedCookie = cookie.parse(cookieList);
     const sid = parsedCookie?.['connect.sid'];
-    const sidParsed = signedCookie(sid, sessionSecret);
+    const sidParsed = signedCookie(sid, sessionSecret) || null;
 
-    if (!sidParsed) {
-        throw new Error("Bad cookie: " +  JSON.stringify({ cookieList, parsedCookie, sid, sidParsed }),);
+    if (sidParsed == null) {
+        console.log("Bad cookie: " + JSON.stringify({ cookieList, parsedCookie, sid, sidParsed }),);
     }
     return sidParsed
 }
 
-async function getUserIdFromSessionStore(sid: string): Promise<ObjectId | null> {
+async function getUserIdFromSessionStore(sid: string | null): Promise<ObjectId | null> {
+    if (sid == null) {
+        return null;
+    }
     return new Promise((resolve) => {
         store.get(sid, (err, session: any) => {
-            console.log(session);
             if (err != null) {
                 resolve(null);
                 return;
             }
-
 
             const userId = session?.passport?.user ?? "";
 
@@ -49,13 +58,6 @@ async function getUserIdFromSessionStore(sid: string): Promise<ObjectId | null> 
     })
 }
 
-function isLoggedIn(context: GraphQLContext): void {
-    if (context?.user?._id == null) {
-        throw new GraphQLError("Unauthorized, log in!")
-    }
-
-    return;
-}
 
 function logoutSession(sid: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -71,4 +73,4 @@ function logoutSession(sid: string): Promise<void> {
 }
 
 
-export { isLoggedIn, initializeSessionStore, getUserIdFromSessionStore, getSessionIdFromCookie, logoutSession }
+export { initializeSessionStore, getUserInfoFromRequest, logoutSession }

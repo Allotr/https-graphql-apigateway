@@ -1,82 +1,77 @@
 import { buildSchema } from "graphql";
 import { parse } from 'graphql'
-import { DIRECTIVES } from '@graphql-codegen/typescript-mongodb';
-import 'graphql-import-node';
-import * as userTypeDefs from "allotr-graphql-schema-types/src/schemas/user.graphql"
-import * as resourceTypeDefs from "allotr-graphql-schema-types/src/schemas/resource.graphql"
-import * as notificationTypeDefs from "allotr-graphql-schema-types/src/schemas/resourceNotification.graphql"
 import { buildHTTPExecutor } from '@graphql-tools/executor-http'
 import { stitchSchemas } from '@graphql-tools/stitch'
-import { stitchingDirectives } from '@graphql-tools/stitching-directives'
 import { getLoadedEnvVariables } from '../utils/env-loader';
 
-const { allStitchingDirectivesTypeDefs, stitchingDirectivesTransformer } = stitchingDirectives()
-
-export async function createGatewaySchema(cookie) {
+export async function makeGatewaySchema() {
     const {
         GRAPHQL_USERS_URL,
         GRAPHQL_RESOURCES_URL,
         GRAPHQL_NOTIFICATIONS_URL
     } = getLoadedEnvVariables()
 
+
     const usersExec = buildHTTPExecutor({
         endpoint: GRAPHQL_USERS_URL,
         credentials: 'include',
-        headers: { 'cookie': cookie }
+        headers: executorRequest => {
+            return {
+                Authorization: `Bearer ${executorRequest?.context?.sid ?? ""}`
+            }
+        }
     })
     const resourcesExec = buildHTTPExecutor({
         endpoint: GRAPHQL_RESOURCES_URL,
         credentials: 'include',
-        headers: { 'cookie': cookie }
+        headers: executorRequest => {
+            return {
+                Authorization: `Bearer ${executorRequest?.context?.sid ?? ""}`
+            }
+        }
     })
     const notificationsExec = buildHTTPExecutor({
         endpoint: GRAPHQL_NOTIFICATIONS_URL,
         credentials: 'include',
-        headers: { 'cookie': cookie }
+        headers: executorRequest => {
+            return {
+                Authorization: `Bearer ${executorRequest?.context?.sid ?? ""}`
+            }
+        }
     })
 
-    const usersTypeDefs = /* GraphQL */ `
-    ${allStitchingDirectivesTypeDefs}
-    ${DIRECTIVES?.loc?.source?.body}
-    ${userTypeDefs?.loc?.source?.body}
-    `
 
-
-    const resourcesTypeDefs = /* GraphQL */ `
-    ${allStitchingDirectivesTypeDefs}
-    ${DIRECTIVES?.loc?.source?.body}
-    ${resourceTypeDefs?.loc?.source?.body}
-    `
-
-
-    const notificationsTypeDefs = /* GraphQL */ `
-    ${allStitchingDirectivesTypeDefs}
-    ${DIRECTIVES?.loc?.source?.body}
-    ${notificationTypeDefs?.loc?.source?.body}
-    `
-
-    return stitchSchemas({
-        // 1. Include directives transformer...
-        subschemaConfigTransforms: [stitchingDirectivesTransformer],
+    const schemas = stitchSchemas({
         subschemas: [
             {
-                schema: buildSchema(usersTypeDefs),
+                schema: await fetchRemoteSchema(usersExec, "User"),
                 executor: usersExec
             },
             {
-                schema: buildSchema(resourcesTypeDefs),
+                schema: await fetchRemoteSchema(resourcesExec, "Resource"),
                 executor: resourcesExec
             },
             {
-                schema: buildSchema(notificationsTypeDefs),
+                schema: await fetchRemoteSchema(notificationsExec, "Notification"),
                 executor: notificationsExec
             }
-        ]
+        ],
+
     })
+
+
+    return schemas;
 }
 
-async function fetchRemoteSchema(executor) {
+async function fetchRemoteSchema(executor, type: "Resource" | "User" | "Notification") {
     // 2. Fetch schemas from their raw SDL queries...
-    const result = await executor({ document: parse('{ _sdl }') })
-    return buildSchema(result.data._sdl)
+    const customSDL = `_sdl${type}`;
+    const result = await executor({
+        document: parse(`query ${customSDL} {  ${customSDL} }`)
+    })
+    if ('data' in result && customSDL in result.data) {
+        return buildSchema(result.data[customSDL])
+    }
+    console.log("BUILD REMOTE SCHEMA", result)
+    return buildSchema("")
 }

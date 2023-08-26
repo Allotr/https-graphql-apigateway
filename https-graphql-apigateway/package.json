@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 0",
     "build": "tsc --build ./tsconfig.json",
     "watch-build": "tsc --build --watch ./tsconfig.json",
+    "start-local": "node ./dist/function/index.js",
     "start": "node ../dist/function/index.js"
   },
   "keywords": [],
@@ -31,7 +32,7 @@
     "@graphql-tools/stitching-directives": "^3.0.0",
     "@graphql-tools/utils": "^8.1.1",
     "@graphql-yoga/plugin-response-cache": "^2.1.1",
-    "allotr-graphql-schema-types": "3.0.1",
+    "allotr-graphql-schema-types": "3.0.2",
     "connect-mongo": "^4.5.0",
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.6",
