@@ -1,48 +1,64 @@
-import https from "https";
-import * as http from "http";
-import * as core from 'express-serve-static-core';
-
+import { getMongoDBConnection } from "./src/utils/mongodb-connector";
+import { getRedisConnection } from "./src/utils/redis-connector";
 import { createGatewaySchema } from "./src/graphql/schemasMap";
 import { getLoadedEnvVariables } from "./src/utils/env-loader";
-import { graphqlHTTP } from 'express-graphql';
-import { parse } from "graphql";
-import { compileQuery } from "graphql-jit";
-import { initializeCORS } from "./src/cors/cors-middleware";
-import { initializeGooglePassport, isLoggedIn } from "./src/auth/google-passport";
+import { createYoga } from "graphql-yoga";
+import { TemplatedApp } from "uWebSockets.js";
+import { useGraphQlJit } from '@envelop/graphql-jit'
+import { useParserCache } from "@envelop/parser-cache";
+import cookie from "cookie";
 
-async function handle(event: any, context: any, cb: any) {
-  // When using graphqlHTTP this is not being executed
-}
+import { useResponseCache, UseResponseCacheParameter } from '@graphql-yoga/plugin-response-cache'
+import { createRedisCache } from '@envelop/response-cache-redis'
+import { getSessionIdFromCookie, getUserIdFromSessionStore, initializeSessionStore, logoutSession } from "./src/middlewares/auth";
+import { corsRequestHandler } from "./src/middlewares/cors";
+import { ServerContext, UserContext } from "./src/types/yoga-context";
 
-function onExpressServerCreated(app: core.Express) {
+
+function onServerCreated(app: TemplatedApp) {
   // Create GraphQL HTTP server
-  // IMPORTANT: ENVIRONMENT VARIABLES ONLY ARE AVAILABLE HERE AND ON onExpressServerListen
-  initializeCORS(app);
-  initializeGooglePassport(app);
+  // IMPORTANT: ENVIRONMENT VARIABLES ONLY ARE AVAILABLE HERE AND ON onServerListen
+  const redis = getRedisConnection().connection;
+  const cache = createRedisCache({ redis }) as UseResponseCacheParameter["cache"]
 
-  const cache = {};
-  app.use("/graphql", isLoggedIn, graphqlHTTP(async (req, res, params) => {
-    const schema = await createGatewaySchema(req.headers?.cookie);
-    const query = params?.query;
-    if (query == null) {
-      return { schema, graphiql: true, context: req };
-    }
-    if (!(query in cache)) {
-      const document = parse(query);
-      cache[query] = compileQuery(schema, document);
-    }
-
-    return {
-      schema,
-      customExecuteFn: ({ rootValue, variableValues, contextValue }) =>
-        cache[query].query(rootValue, contextValue, variableValues),
-      context: req,
-      graphiql: true
-    };
-  }));
+  const yoga = createYoga<ServerContext, UserContext>({
+    schema: async ({ request }) => createGatewaySchema(request.headers.get("cookie")),
+    context: async ({ req, res, request }) => {
+      initializeSessionStore();
+      const sid = getSessionIdFromCookie(request);
+      const userId = await getUserIdFromSessionStore(sid);
+      return { // Context factory gets called for every request
+        req,
+        res,
+        user: {
+          _id: userId
+        },
+        mongoDBConnection: getMongoDBConnection(),
+        redisConnection: getRedisConnection(),
+        sid,
+        logout: logoutSession,
+        cache
+      }
+    },
+    cors: corsRequestHandler,
+    graphiql: true,
+    plugins: [
+      useGraphQlJit(),
+      useParserCache(),
+      useResponseCache({
+        session: (request) => {
+          const cookieList = request.headers.get('cookie') ?? "";
+          const parsedCookie = cookie.parse(cookieList);
+          return parsedCookie?.['connect.sid'];
+        },
+        cache
+      })
+    ]
+  })
+  app.any("/graphql", yoga);
 }
 
-async function onExpressServerListen(server: https.Server | http.Server) {
+async function onServerListen(app: TemplatedApp) {
   // MongoDB Connection
   const { HTTPS_PORT } = getLoadedEnvVariables();
 
@@ -50,4 +66,4 @@ async function onExpressServerListen(server: https.Server | http.Server) {
 }
 
 
-export { handle, onExpressServerCreated, onExpressServerListen };
+export { onServerCreated, onServerListen };
