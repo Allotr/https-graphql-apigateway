@@ -27,7 +27,7 @@ function getSessionIdFromCookie(request: Request): string {
     const sidParsed = signedCookie(sid, sessionSecret);
 
     if (!sidParsed) {
-        throw new Error("Bad cookie");
+        throw new Error("Bad cookie: " +  JSON.stringify({ cookieList, parsedCookie, sid, sidParsed }),);
     }
     return sidParsed
 }
@@ -35,10 +35,12 @@ function getSessionIdFromCookie(request: Request): string {
 async function getUserIdFromSessionStore(sid: string): Promise<ObjectId | null> {
     return new Promise((resolve) => {
         store.get(sid, (err, session: any) => {
+            console.log(session);
             if (err != null) {
                 resolve(null);
                 return;
             }
+
 
             const userId = session?.passport?.user ?? "";
 
@@ -48,7 +50,7 @@ async function getUserIdFromSessionStore(sid: string): Promise<ObjectId | null> 
 }
 
 function isLoggedIn(context: GraphQLContext): void {
-    if (context?.user?._id == null){
+    if (context?.user?._id == null) {
         throw new GraphQLError("Unauthorized, log in!")
     }
 
