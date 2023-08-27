@@ -22,7 +22,7 @@ function initializeSessionStore() {
 async function getUserInfoFromRequest(request: Request): Promise<[sid: string | null, userId: ObjectId | null]> {
     const sid = getSessionIdFromCookie(request);
     const userId = await getUserIdFromSessionStore(sid);
-    if(userId == null){
+    if (userId == null) {
         throw new GraphQLError("Unauthorized, log in!");
     }
     return [sid, userId];

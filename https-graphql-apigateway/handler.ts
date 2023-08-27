@@ -7,14 +7,20 @@ import { TemplatedApp } from "uWebSockets.js";
 import { useGraphQlJit } from '@envelop/graphql-jit'
 import { useParserCache } from "@envelop/parser-cache";
 
+import { useResponseCache, UseResponseCacheParameter } from '@graphql-yoga/plugin-response-cache'
+import { createRedisCache } from '@envelop/response-cache-redis'
 import { getUserInfoFromRequest, initializeSessionStore, logoutSession } from "./src/middlewares/auth";
 import { corsRequestHandler } from "./src/middlewares/cors";
 import { ServerContext, UserContext } from "./src/types/yoga-context";
+import { queryNames } from "./src/consts/query-names";
+import _ from "lodash";
 
 
 function onServerCreated(app: TemplatedApp) {
   // Create GraphQL HTTP server
   // IMPORTANT: ENVIRONMENT VARIABLES ONLY ARE AVAILABLE HERE AND ON onServerListen
+  const redis = getRedisConnection().connection;
+  const cache = createRedisCache({ redis }) as UseResponseCacheParameter["cache"]
   initializeSessionStore();
 
   const yoga = createYoga<ServerContext, UserContext>({
@@ -31,7 +37,8 @@ function onServerCreated(app: TemplatedApp) {
         mongoDBConnection: getMongoDBConnection(),
         redisConnection: getRedisConnection(),
         sid: sid!, // After login the session id is not null
-        logout: logoutSession
+        logout: logoutSession,
+        cache
       }
     },
     cors: corsRequestHandler,
@@ -39,6 +46,25 @@ function onServerCreated(app: TemplatedApp) {
     plugins: [
       useGraphQlJit(),
       useParserCache(),
+      useResponseCache({
+        idFields: ["id", "_id"],
+        session: async (request) => {
+          const [sid] = await getUserInfoFromRequest(request);
+          return sid
+        },
+        shouldCacheResult: ({ result }) => {
+          const functionBlacklist = [
+            'myNotificationData'
+          ]
+
+          const data = result?.data as any;
+          const isEmptyValue = queryNames.some(query => data?.[query] != null && _.isEmpty(data?.[query]))
+          const isValidFunction = functionBlacklist.every(key => data?.[key] == null);
+
+          return !isEmptyValue && isValidFunction
+        },
+        cache
+      })
     ]
   })
   app.any("/graphql", yoga);
