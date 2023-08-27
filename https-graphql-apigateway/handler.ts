@@ -10,9 +10,9 @@ import cookie from "cookie";
 
 import { useResponseCache, UseResponseCacheParameter } from '@graphql-yoga/plugin-response-cache'
 import { createRedisCache } from '@envelop/response-cache-redis'
-import { initializeSessionStore } from "./src/middlewares/auth";
+import { getSessionIdFromCookie, initializeSessionStore } from "./src/middlewares/auth";
 import { corsRequestHandler } from "./src/middlewares/cors";
-import { ServerContext } from "./src/types/yoga-context";
+import { ServerContext, UserContext } from "./src/types/yoga-context";
 import { queryNames } from "./src/consts/query-names";
 import _ from "lodash";
 
@@ -24,8 +24,15 @@ function onServerCreated(app: TemplatedApp) {
   const cache = createRedisCache({ redis }) as UseResponseCacheParameter["cache"]
   initializeSessionStore();
 
-  const yoga = createYoga<ServerContext>({
+  const yoga = createYoga<ServerContext, UserContext>({
     schema: makeGatewaySchema(),
+    context: ({ request }) => {
+      // Context factory gets called for every request
+      const sid = getSessionIdFromCookie(request);
+      return {
+        sid
+      }
+    },
     cors: corsRequestHandler,
     graphiql: true,
     plugins: [

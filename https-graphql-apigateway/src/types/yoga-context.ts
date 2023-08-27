@@ -12,12 +12,7 @@ interface ServerContext {
   }
 
 type UserContext = {
-    mongoDBConnection: Promise<{ connection: Promise<MongoClient>, db: Promise<Db> }>;
-    redisConnection: { pubsub: RedisPubSub, connection: Redis };
-    user: Pick<UserDbObject, "_id">;
-    cache: UseResponseCacheParameter["cache"]
-    sid: string,
-    logout: (sid: string) => Promise<void>
+    sid: string | null,
 }
 
 type GraphQLContext = ServerContext & UserContext;
