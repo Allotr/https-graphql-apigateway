@@ -46,12 +46,12 @@ async function getUserIdFromSessionStore(sid: string | null): Promise<ObjectId |
     }
     return new Promise((resolve) => {
         store.get(sid, (err, session: any) => {
-            if (err != null) {
+            if (err != null || session?.passport?.user == null) {
                 resolve(null);
                 return;
             }
 
-            const userId = session?.passport?.user ?? "";
+            const userId = session?.passport?.user;
 
             resolve(new ObjectId(userId));
         })
@@ -73,4 +73,4 @@ function logoutSession(sid: string): Promise<void> {
 }
 
 
-export { initializeSessionStore, getUserInfoFromRequest, logoutSession }
+export { initializeSessionStore, getUserInfoFromRequest, logoutSession, getSessionIdFromCookie }
