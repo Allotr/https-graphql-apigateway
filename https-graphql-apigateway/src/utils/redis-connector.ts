@@ -1,10 +1,9 @@
 import * as Redis from 'ioredis';
-import { RedisPubSub } from "graphql-redis-subscriptions";
 import { getLoadedEnvVariables } from "./env-loader";
 
 
-let getRedisConnection = (): { pubsub: RedisPubSub, connection: Redis.Redis } => {
-    var instance: { pubsub: RedisPubSub, connection: Redis.Redis };
+let getRedisConnection = (): { connection: Redis.Redis } => {
+    var instance: { connection: Redis.Redis };
 
     getRedisConnection = () => {
         return instance;
@@ -24,12 +23,6 @@ let getRedisConnection = (): { pubsub: RedisPubSub, connection: Redis.Redis } =>
             }
         };
         instance = {
-            pubsub: new RedisPubSub({
-                messageEventName: 'messageBuffer',
-                pmessageEventName: 'pmessageBuffer',
-                publisher: new Redis.default(options),
-                subscriber: new Redis.default(options)
-            }), 
             connection: new Redis.default(options)
         };
         return instance;

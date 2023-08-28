@@ -1,4 +1,3 @@
-import { getMongoDBConnection } from "./src/utils/mongodb-connector";
 import { getRedisConnection } from "./src/utils/redis-connector";
 import { makeGatewaySchema } from "./src/graphql/schemasMap";
 import { getLoadedEnvVariables } from "./src/utils/env-loader";
@@ -24,7 +23,7 @@ function onServerCreated(app: TemplatedApp) {
   const cache = createRedisCache({ redis }) as UseResponseCacheParameter["cache"]
   initializeSessionStore();
 
-  const yoga = createYoga<ServerContext, UserContext>({
+    const yoga = createYoga<ServerContext, UserContext>({
     schema: makeGatewaySchema(),
     context: ({ request }) => {
       // Context factory gets called for every request
@@ -41,9 +40,8 @@ function onServerCreated(app: TemplatedApp) {
       useResponseCache({
         idFields: ["id", "_id"],
         session: (request) => {
-          const cookieList = request.headers.get('cookie') ?? "";
-          const parsedCookie = cookie.parse(cookieList);
-          return parsedCookie?.['connect.sid'];
+          const sid = getSessionIdFromCookie(request);
+          return `Bearer ${sid ?? ""}`;
         },
         shouldCacheResult: ({ result }) => {
           const functionBlacklist = [
