@@ -37,25 +37,25 @@ function onServerCreated(app: TemplatedApp) {
     plugins: [
       useGraphQlJit(),
       useParserCache(),
-      useResponseCache({
-        idFields: ["id", "_id"],
-        session: (request) => {
-          const sid = getSessionIdFromCookie(request);
-          return `Bearer ${sid ?? ""}`;
-        },
-        shouldCacheResult: ({ result }) => {
-          const functionBlacklist = [
-            'myNotificationData'
-          ]
+      // useResponseCache({
+      //   idFields: ["id", "_id"],
+      //   session: (request) => {
+      //     const sid = getSessionIdFromCookie(request);
+      //     return `Bearer ${sid ?? ""}`;
+      //   },
+      //   shouldCacheResult: ({ result }) => {
+      //     const functionBlacklist = [
+      //       'myNotificationData'
+      //     ]
 
-          const data = result?.data as any;
-          const isEmptyValue = queryNames.some(query => data?.[query] != null && _.isEmpty(data?.[query]))
-          const isValidFunction = functionBlacklist.every(key => data?.[key] == null);
+      //     const data = result?.data as any;
+      //     const isEmptyValue = queryNames.some(query => data?.[query] != null && _.isEmpty(data?.[query]))
+      //     const isValidFunction = functionBlacklist.every(key => data?.[key] == null);
 
-          return !isEmptyValue && isValidFunction
-        },
-        cache
-      })
+      //     return !isEmptyValue && isValidFunction
+      //   },
+      //   cache
+      // })
     ]
   })
   app.any("/graphql", yoga);
