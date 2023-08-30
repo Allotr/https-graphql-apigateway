@@ -71,6 +71,6 @@ async function fetchRemoteSchema(executor, type: "Resource" | "User" | "Notifica
     if ('data' in result && customSDL in result.data) {
         return buildSchema(result.data[customSDL])
     }
-    console.log("BUILD REMOTE SCHEMA", result)
+    console.log("BUILD REMOTE SCHEMA", type, result)
     return buildSchema("")
 }
