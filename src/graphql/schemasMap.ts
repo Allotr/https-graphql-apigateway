@@ -2,6 +2,7 @@ import { buildSchema } from "graphql";
 import { parse } from 'graphql'
 import { buildHTTPExecutor } from '@graphql-tools/executor-http'
 import { stitchSchemas } from '@graphql-tools/stitch'
+import type { Executor } from '@graphql-tools/utils'
 import { getLoadedEnvVariables } from '../utils/env-loader';
 
 export async function makeGatewaySchema() {
@@ -62,7 +63,7 @@ export async function makeGatewaySchema() {
     return schemas;
 }
 
-async function fetchRemoteSchema(executor, type: "Resource" | "User" | "Notification") {
+async function fetchRemoteSchema(executor: Executor, type: "Resource" | "User" | "Notification") {
     // 2. Fetch schemas from their raw SDL queries...
     const customSDL = `_sdl${type}`;
     const result = await executor({

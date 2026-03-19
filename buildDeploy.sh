@@ -1,4 +1,10 @@
 #!/bin/bash
-rm -rf ./template
-faas-cli template pull https://github.com/rafaelpernil2/openfaas-template-node-typescript-uwebsockets
-faas-cli up -f ./https-graphql-apigateway.yml
+docker build -t https-graphql-apigateway .
+docker tag https-graphql-apigateway rafaelpernil/https-graphql-apigateway:latest
+docker push rafaelpernil/https-graphql-apigateway:latest
+
+kubectl apply -f ./artifacts/deployment.yaml
+kubectl apply -f ./artifacts/service.yaml
+
+kubectl scale --replicas=0 deployment https-graphql-apigateway -n allotr
+kubectl scale --replicas=2 deployment https-graphql-apigateway -n allotr

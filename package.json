@@ -2,13 +2,12 @@
   "name": "allotr-https-graphql-apigateway",
   "version": "1.0.0",
   "description": "A GraphQL server with Queries and Mutations",
-  "main": "handler.ts",
+  "main": "./dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",
-    "build": "tsc --build ./tsconfig.json",
+    "build": "tsc -build tsconfig.json",
     "watch-build": "tsc --build --watch ./tsconfig.json",
-    "start-local": "node ./dist/function/index.js",
-    "start": "node ../dist/function/index.js"
+    "start": "node ./dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -23,11 +22,12 @@
     "@envelop/parser-cache": "^6.0.1",
     "@graphql-tools/executor-http": "^1.0.2",
     "@graphql-tools/stitch": "^9.0.1",
+    "@graphql-tools/utils": "^9.0.1",
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.3.1",
     "graphql": "^15.5.0",
     "graphql-yoga": "^4.0.4",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.31.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.59.0"
   }
 }
