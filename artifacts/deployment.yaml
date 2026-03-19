@@ -1,0 +1,92 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: https-graphql-apigateway
+  namespace: allotr
+  labels:
+    app: https-graphql-apigateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: https-graphql-apigateway
+  template:
+    metadata:
+      labels:
+        app: https-graphql-apigateway
+    spec:
+      containers:
+        - name: https-graphql-apigateway
+          image: rafaelpernil/https-graphql-apigateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              memory: 1Gi
+              cpu: "500m"
+            requests:
+              memory: 1Gi
+              cpu: "250m"
+          env:
+            - name:  SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  SESSION_SECRET
+            - name:  REDIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  REDIRECT_URL
+            - name:  MONGO_DB_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  MONGO_DB_ENDPOINT
+            - name:  VAPID_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  VAPID_PUBLIC_KEY
+            - name:  VAPID_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  VAPID_PRIVATE_KEY
+            - name:  REDIS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  REDIS_ENDPOINT
+            - name:  REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  REDIS_PORT
+            - name:  DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  DB_NAME
+            - name:  HTTPS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  HTTPS_PORT
+            - name:  GRAPHQL_USERS_URL
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  GRAPHQL_USERS_URL
+            - name:  GRAPHQL_RESOURCES_URL
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  GRAPHQL_RESOURCES_URL
+            - name:  GRAPHQL_NOTIFICATIONS_URL
+              valueFrom:
+                secretKeyRef:
+                  name:  https-graphql-apigateway-secret
+                  key:  GRAPHQL_NOTIFICATIONS_URL
+      restartPolicy: Always

@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: https-graphql-apigateway
+  namespace: allotr
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: https-graphql-apigateway
